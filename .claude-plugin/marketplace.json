@@ -1,0 +1,16 @@
+{
+  "name": "claude-kit",
+  "owner": {
+    "name": "Eugenio Moreira",
+    "email": "me@eugeniomoreira.com"
+  },
+  "description": "Eugenio Moreira's reusable Claude Code skills, agents and commands, enabled per project.",
+  "plugins": [
+    {
+      "name": "frontend",
+      "source": "./plugins/frontend",
+      "description": "Frontend conventions: clickable elements look and act clickable (real links/buttons, pointer cursor, focus states), any stack.",
+      "version": "1.0.0"
+    }
+  ]
+}

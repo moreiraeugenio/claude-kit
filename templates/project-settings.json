@@ -1,0 +1,11 @@
+{
+  "extraKnownMarketplaces": {
+    "claude-kit": {
+      "source": { "source": "github", "repo": "moreiraeugenio/claude-kit" },
+      "autoUpdate": true
+    }
+  },
+  "enabledPlugins": {
+    "frontend@claude-kit": true
+  }
+}
