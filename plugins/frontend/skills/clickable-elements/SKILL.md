@@ -1,6 +1,6 @@
 ---
 name: clickable-elements
-description: Use for ANY frontend or UI work in any stack (React, Next, Vue, Nuxt, Svelte, Angular, Astro, Solid, plain HTML/CSS, Tailwind or not): building or editing pages, components, buttons, links, nav, cards, menus, or reviewing UI code.
+description: "Use for ANY frontend or UI work in any stack (React, Next, Vue, Nuxt, Svelte, Angular, Astro, Solid, plain HTML/CSS, Tailwind or not): building or editing pages, components, buttons, links, nav, cards, menus, or reviewing UI code."
 ---
 
 # Clickable elements must look and act clickable
