@@ -50,12 +50,12 @@ Two prompts to paste into Claude Code in the target project. They don't name spe
 Set up the claude-kit plugin marketplace (github: moreiraeugenio/claude-kit) for this project.
 
 1. Read https://github.com/moreiraeugenio/claude-kit/blob/main/.claude-plugin/marketplace.json and the Plugins table in the README to see what every plugin does.
-2. Look at this project's stack and tooling to work out which plugins fit.
+2. Look at this project's stack and tooling to work out which plugins fit. Workflow plugins (for example git or commit conventions) fit any project, not only a particular stack.
 3. Let me choose with the AskUserQuestion tool, as a multi-select question. Each plugin is one option: the label is the plugin name, and the description is one short line on what it does. Add "(Recommended)" to the label of the plugins that fit this project and put them first. The tool allows at most 4 options per question, so if there are more plugins, split them across several questions (up to 4 per call) grouped by area.
 4. Edit `.claude/settings.json` in the project root. Create the file and the `.claude/` folder if they don't exist. If the file already exists, merge these keys in and keep every other setting. If `enabledPlugins` or `extraKnownMarketplaces` already exist, add to them instead of replacing them:
    - `extraKnownMarketplaces.claude-kit` = { "source": { "source": "github", "repo": "moreiraeugenio/claude-kit" }, "autoUpdate": true }
    - `enabledPlugins` = "<plugin>@claude-kit": true for each plugin I selected
-5. Check that the result is valid JSON, then show me the final file. Don't commit.
+5. Check that the result is valid JSON, then show me the final file and ask me whether to commit and push it.
 ```
 
 Then restart Claude Code and run `/plugin` to install the enabled plugins.
@@ -66,13 +66,12 @@ Then restart Claude Code and run `/plugin` to install the enabled plugins.
 Bring this project in line with every claude-kit plugin enabled in `.claude/settings.json`.
 
 1. For each enabled `<plugin>@claude-kit`, list all of its skills, agents, commands and hooks, and read each one in full (SKILL.md, agent and command files). If any are missing from your session, read them from https://github.com/moreiraeugenio/claude-kit/tree/main/plugins/<plugin> instead.
-2. Review the whole project against the rules in each one. If one doesn't apply to this project, skip it and say why. Where a plugin provides an agent built for review or auditing, use that agent for its area.
+2. Review the whole project against the rules in each one. If one doesn't apply to this project, skip it and say why. Where a plugin provides an agent built for review or auditing, use that agent for its area. Some plugins cover a workflow rather than code (for example a skill that needs a per-project config file, such as the git plugin's `.claude/git-workflow.json`): run their setup steps and ask me whatever they say to ask.
 3. Before changing anything, show me a findings list grouped by plugin and skill/agent. For each finding give the file:line, the rule it breaks, and the fix you propose.
 4. Then apply the fixes. Keep changes minimal and match the existing code style. Ask me before any destructive or infra-affecting change, such as deleting files, changing deploy targets or renaming env vars.
 5. Run the project's existing lint, typecheck and tests, and report the results.
 6. Finish with a summary of what changed per plugin, and anything you left alone on purpose.
-
-Don't commit.
+7. Don't commit during the review. At the end, commit and push the way the enabled plugins say (for example the git plugin's workflow). If no plugin covers it, ask me first.
 ```
 
 Run prompt 2 again whenever a plugin gains new skills or agents.
