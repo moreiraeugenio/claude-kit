@@ -3,7 +3,7 @@ description: Commit and push everything that's changed in the repo, including ed
 argument-hint: "[optional note about the change or commit message]"
 ---
 
-Commit and push the current changes in this repository, following the git:commit-push skill and the project's `.claude/git-workflow.json`.
+Commit and push the current changes in this repository, following the ck-git:commit-push skill and the project's `.claude/git-workflow.json`.
 
 Running this command is the user's go-ahead: don't ask whether to commit and push, just do it.
 

@@ -3,13 +3,13 @@ description: Review the whole project against the latest frontend plugin rules (
 argument-hint: "[optional focus, e.g. a folder or a single skill]"
 ---
 
-Bring this whole project in line with the claude-kit `frontend` plugin, using its latest version. Works without the `kit` plugin. To sync against several plugins at once, use `/kit:sync` instead.
+Bring this whole project in line with the claude-kit `ck-frontend` plugin, using its latest version. Works without the `ck` plugin. To sync against several plugins at once, use `/ck:sync` instead.
 
 ## 1. Read the rules
 
 1. Refresh the marketplace: `claude plugin marketplace update claude-kit`. If that fails (marketplace not added here, offline), go on.
-2. List all of the plugin's skills, agents, commands and hooks, and read each one in full (SKILL.md, agent and command files, hook scripts), except this `sync` command. Read the latest version: the local marketplace copy at `~/.claude/plugins/marketplaces/claude-kit/plugins/frontend/`, or https://github.com/moreiraeugenio/claude-kit/tree/main/plugins/frontend if that's missing.
-3. Compare the latest `version` (its `.claude-plugin/plugin.json`) with the installed one (`claude plugin list --json`, the `frontend@claude-kit` entry for this project or user scope). Check whether `.claude/settings.json` has `"frontend@claude-kit": true` under `enabledPlugins`.
+2. List all of the plugin's skills, agents, commands and hooks, and read each one in full (SKILL.md, agent and command files, hook scripts), except this `sync` command. Read the latest version: the local marketplace copy at `~/.claude/plugins/marketplaces/claude-kit/plugins/ck-frontend/`, or https://github.com/moreiraeugenio/claude-kit/tree/main/plugins/ck-frontend if that's missing.
+3. Compare the latest `version` (its `.claude-plugin/plugin.json`) with the installed one (`claude plugin list --json`, the `ck-frontend@claude-kit` entry for this project or user scope). Check whether `.claude/settings.json` has `"ck-frontend@claude-kit": true` under `enabledPlugins`.
 
 ## 2. Review, then fix
 
@@ -23,5 +23,5 @@ Focus, if I gave one: $ARGUMENTS
 ## 3. Finish
 
 1. Summarise what changed per skill/agent, and anything you left alone on purpose.
-2. If the installed version is older than the latest, tell me to run `claude plugin update frontend@claude-kit` and then `/reload-plugins`. If the plugin isn't enabled in `.claude/settings.json`, say so and offer to enable it (or run `/kit:setup`).
-3. Don't commit during the review. At the end, commit and push the way the project's git workflow says (the git plugin's `.claude/git-workflow.json`, if present). Otherwise ask me first.
+2. If the installed version is older than the latest, tell me to run `claude plugin update ck-frontend@claude-kit` and then `/reload-plugins`. If the plugin isn't enabled in `.claude/settings.json`, say so and offer to enable it (or run `/ck:setup`).
+3. Don't commit during the review. At the end, commit and push the way the project's git workflow says (the ck-git plugin's `.claude/git-workflow.json`, if present). Otherwise ask me first.

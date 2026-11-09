@@ -1,6 +1,6 @@
 {
   "enabledPlugins": {
-    "git@claude-kit": true
+    "ck-git@claude-kit": true
   },
   "extraKnownMarketplaces": {
     "claude-kit": {

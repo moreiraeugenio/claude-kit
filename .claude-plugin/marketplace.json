@@ -7,28 +7,28 @@
   "description": "Eugenio Moreira's reusable Claude Code skills, agents and commands, enabled per project.",
   "plugins": [
     {
-      "name": "frontend",
-      "source": "./plugins/frontend",
+      "name": "ck-frontend",
+      "source": "./plugins/ck-frontend",
       "description": "Frontend conventions: clickable elements look and act clickable (real links/buttons, pointer cursor, focus states), any stack.",
-      "version": "1.1.0"
+      "version": "2.0.0"
     },
     {
-      "name": "infra",
-      "source": "./plugins/infra",
+      "name": "ck-infra",
+      "source": "./plugins/ck-infra",
       "description": "Infrastructure conventions: Railway IaC in .railway/ (one TypeScript file per service, own package.json with plan/apply/deploy scripts), railway up deploys (no GitHub link), Dockerfile-built services and databases, role-based names like database / database-data.",
-      "version": "1.2.0"
+      "version": "2.0.0"
     },
     {
-      "name": "git",
-      "source": "./plugins/git",
+      "name": "ck-git",
+      "source": "./plugins/ck-git",
       "description": "Git workflow: solo or team mode saved per project in .claude/git-workflow.json (asked once), commits and pushes straight to main unless a branch is explicitly asked for, and a Stop hook that has Claude ask to commit and push after every change.",
-      "version": "1.1.0"
+      "version": "2.0.0"
     },
     {
-      "name": "kit",
-      "source": "./plugins/kit",
-      "description": "claude-kit tooling, installed once per user: /kit:setup picks and installs plugins for a project; /kit:sync asks which plugins to sync against (enabled or not, installed vs latest version), reviews the project against their latest rules and fixes it.",
-      "version": "1.1.0"
+      "name": "ck",
+      "source": "./plugins/ck",
+      "description": "claude-kit tooling, installed once per user: /ck:setup picks and installs plugins for a project; /ck:sync asks which plugins to sync against (enabled or not, installed vs latest version), reviews the project against their latest rules and fixes it.",
+      "version": "2.0.0"
     }
   ]
 }

@@ -41,6 +41,6 @@ else
   setup=" This project has no .claude/git-workflow.json yet, so run the setup step of the skill first (ask solo or team, save the file)."
 fi
 
-reason="There are uncommitted or unpushed changes. Follow the git:commit-push skill: ask the user with AskUserQuestion whether to commit and push now.${setup} If they decline, stop without committing."
+reason="There are uncommitted or unpushed changes. Follow the ck-git:commit-push skill: ask the user with AskUserQuestion whether to commit and push now.${setup} If they decline, stop without committing."
 
 printf '{"decision":"block","reason":"%s"}\n' "$reason"

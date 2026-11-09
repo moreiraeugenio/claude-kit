@@ -1,6 +1,6 @@
 ---
 description: Review this project against the claude-kit plugins you pick (enabled or not, latest version) and bring it in line.
-argument-hint: "[optional plugin names to sync against, e.g. infra git]"
+argument-hint: "[optional plugin names to sync against, e.g. ck-infra ck-git]"
 ---
 
 Bring this project in line with the claude-kit plugins I choose, using each plugin's latest version.
@@ -8,10 +8,10 @@ Bring this project in line with the claude-kit plugins I choose, using each plug
 ## 1. Gather status
 
 1. Refresh the marketplace: `claude plugin marketplace update claude-kit`. If that fails (marketplace not added here, offline), read the catalog from https://github.com/moreiraeugenio/claude-kit/blob/main/.claude-plugin/marketplace.json instead.
-2. Read the catalog: `.claude-plugin/marketplace.json` in the local marketplace copy (`~/.claude/plugins/marketplaces/claude-kit/`), or the GitHub one. Skip the `kit` plugin itself: it has no rules to sync against.
-3. Read `.claude/settings.json` (and `.claude/settings.local.json` if present) for `enabledPlugins` entries ending in `@claude-kit`.
+2. Read the catalog: `.claude-plugin/marketplace.json` in the local marketplace copy (`~/.claude/plugins/marketplaces/claude-kit/`), or the GitHub one. Skip the `ck` plugin itself: it has no rules to sync against.
+3. Read `.claude/settings.json` (and `.claude/settings.local.json` if present) for `enabledPlugins` entries ending in `@claude-kit`. Plugins were renamed with a `ck-` prefix (`frontend` → `ck-frontend`, `infra` → `ck-infra`, `git` → `ck-git`, `kit` → `ck`). If `.claude/settings.json` still has old entries (`frontend@claude-kit`, `infra@claude-kit`, `git@claude-kit`), replace each with its new name, keep every other setting, and run `claude plugin uninstall <old>@claude-kit --scope project` for the old ones. If `kit@claude-kit` is installed for the user, tell me to run `claude plugin uninstall kit@claude-kit` and `claude plugin install ck@claude-kit`.
 4. Run `claude plugin list --json` and keep the `@claude-kit` entries installed for this project (`projectPath` is this repo, or `scope` is `user`), with their `version`.
-5. Look at the project's stack and tooling to work out which plugins fit. Workflow plugins (for example git) fit any project.
+5. Look at the project's stack and tooling to work out which plugins fit. Workflow plugins (for example ck-git) fit any project.
 
 For each plugin, work out a status: `enabled · installed <v>` (add `· update to <latest>` when older than the catalog version), `enabled · not installed`, or `not enabled`.
 
@@ -29,7 +29,7 @@ For each selected plugin, list all of its skills, agents, commands and hooks, an
 
 ## 4. Review, then fix
 
-1. Review the whole project against the rules in each selected plugin. If a rule doesn't apply to this project, skip it and say why. Where a plugin provides an agent built for review or auditing, use that agent for its area. Some plugins cover a workflow rather than code (for example a skill that needs a per-project config file, such as the git plugin's `.claude/git-workflow.json`): run their setup steps and ask me whatever they say to ask.
+1. Review the whole project against the rules in each selected plugin. If a rule doesn't apply to this project, skip it and say why. Where a plugin provides an agent built for review or auditing, use that agent for its area. Some plugins cover a workflow rather than code (for example a skill that needs a per-project config file, such as the ck-git plugin's `.claude/git-workflow.json`): run their setup steps and ask me whatever they say to ask.
 2. Before changing anything, show me a findings list grouped by plugin and skill/agent. For each finding give the file:line, the rule it breaks, and the fix you propose.
 3. Then apply the fixes. Keep changes minimal and match the existing code style. Ask me before any destructive or infra-affecting change, such as deleting files, changing deploy targets, renaming env vars, or a `plan`/`apply` that recreates, resizes or deletes a resource.
 4. Run the project's existing lint, typecheck and tests, and report the results.
@@ -38,4 +38,4 @@ For each selected plugin, list all of its skills, agents, commands and hooks, an
 
 1. Summarise what changed per plugin, and anything you left alone on purpose.
 2. If an installed plugin is older than the catalog version, or a plugin was newly enabled, tell me to restart Claude Code (or run `/reload-plugins`), then `/plugin` to install it, or `claude plugin update <plugin>@claude-kit` to update it.
-3. Don't commit during the review. At the end, commit and push the way the enabled plugins say (for example the git plugin's workflow). If no plugin covers it, ask me first.
+3. Don't commit during the review. At the end, commit and push the way the enabled plugins say (for example the ck-git plugin's workflow). If no plugin covers it, ask me first.

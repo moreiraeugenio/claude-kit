@@ -6,7 +6,7 @@
     }
   },
   "enabledPlugins": {
-    "frontend@claude-kit": true,
-    "infra@claude-kit": true
+    "ck-frontend@claude-kit": true,
+    "ck-infra@claude-kit": true
   }
 }
