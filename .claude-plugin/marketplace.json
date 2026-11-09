@@ -16,7 +16,7 @@
       "name": "infra",
       "source": "./plugins/infra",
       "description": "Infrastructure conventions: Railway IaC in .railway/ (one TypeScript file per service, own package.json with plan/apply/deploy scripts), railway up deploys (no GitHub link), Dockerfile-built services and databases, role-based names like database / database-data.",
-      "version": "1.0.0"
+      "version": "1.1.0"
     },
     {
       "name": "git",
