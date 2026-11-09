@@ -6,9 +6,9 @@ My reusable Claude Code skills, agents and commands, packaged as a [plugin marke
 
 | Plugin | What it does |
 |---|---|
-| `frontend` | Clickable elements look and act clickable: real links and buttons, pointer cursor, hover and focus states, in any stack. |
-| `infra` | Railway: IaC in `.railway/` with one TypeScript file per service and its own `package.json` (`plan`, `apply`, `deploy:<service>` scripts), no `railway.json`, deploys via `railway up` (never a linked GitHub repo), every service and database built from a Dockerfile (no templates), role-based names like `database` / `database-data`. |
-| `git` | Commits and pushes: asks once per project whether it's solo or team (saved in a committed `.claude/git-workflow.json`). Solo commits and pushes straight to main, never branching unless asked; team uses the workflow picked at setup. Claude asks to commit and push after every change (Stop hook). `/git:commit` commits and pushes everything on demand, including changes you made by hand. |
+| `frontend` | Clickable elements look and act clickable: real links and buttons, pointer cursor, hover and focus states, in any stack. `/frontend:sync` reviews the whole project against it and fixes it. |
+| `infra` | Railway: IaC in `.railway/` with one TypeScript file per service and its own `package.json` (`plan`, `apply`, `deploy:<service>` scripts), no `railway.json`, deploys via `railway up` (never a linked GitHub repo), every service and database built from a Dockerfile (no templates), role-based names like `database` / `database-data`. `/infra:sync` reviews the whole project against it and fixes it. |
+| `git` | Commits and pushes: asks once per project whether it's solo or team (saved in a committed `.claude/git-workflow.json`). Solo commits and pushes straight to main, never branching unless asked; team uses the workflow picked at setup. Claude asks to commit and push after every change (Stop hook). `/git:commit` commits and pushes everything on demand, including changes you made by hand. `/git:sync` reviews the project's git setup against it. |
 | `kit` | Installed once per machine (user scope), not per project. `/kit:setup` asks which plugins to enable in the current project, then writes `.claude/settings.json` and installs them. `/kit:sync` asks which plugins to sync against (enabled or not) and shows each one's status (installed version vs latest). Then it reviews the project against their latest rules, shows the findings and fixes them. Pass names to skip the question: `/kit:setup infra git`, `/kit:sync infra`. |
 
 ## Quick start
@@ -96,7 +96,9 @@ Run `/kit:sync` (or prompt 2) again whenever a plugin changes.
 
 ## Use it in a project
 
-Skills load on their own when the task matches, but they only fix code Claude is already editing and mention violations elsewhere. To apply a skill to a whole existing codebase, ask for it directly. Plugin skills are slash commands named `/<plugin>:<skill>`:
+Skills load on their own when the task matches, but they only fix code Claude is already editing and mention violations elsewhere. To apply a plugin to a whole existing codebase, run its sync command: `/frontend:sync`, `/infra:sync` or `/git:sync`. Each one reads that plugin's latest rules, lists the findings, fixes them and runs your checks, without needing `kit`. Pass a focus to narrow it: `/frontend:sync src/components`. For several plugins at once, use `/kit:sync`.
+
+To apply a single skill, ask for it directly. Plugin skills are slash commands named `/<plugin>:<skill>`:
 
 ```
 /frontend:clickable-elements Review the whole codebase against these rules and fix every violation.
@@ -116,9 +118,10 @@ Use the clickable-elements skill to audit every page and component in this repo.
 
 1. Create `plugins/<name>/` with `.claude-plugin/plugin.json` (`name`, `description`, `version`).
 2. Put components at the plugin root: `skills/<skill>/SKILL.md`, `agents/*.md`, `commands/*.md`, `hooks/hooks.json`, `.mcp.json`.
-3. Register it in `.claude-plugin/marketplace.json` with `"source": "./plugins/<name>"`.
-4. Run `claude plugin validate .` and `claude plugin validate plugins/<name>`.
-5. Add a row to the table above, and enable it in this repo's `.claude/settings.json` (this repo uses every project plugin).
+3. Add `commands/sync.md` (copy another plugin's and change the name) so `/<name>:sync` can review a whole project against it.
+4. Register it in `.claude-plugin/marketplace.json` with `"source": "./plugins/<name>"`.
+5. Run `claude plugin validate .` and `claude plugin validate plugins/<name>`.
+6. Add a row to the table above, and enable it in this repo's `.claude/settings.json` (this repo uses every project plugin).
 
 Plugin names can't start with `claude-` or `anthropic-`.
 

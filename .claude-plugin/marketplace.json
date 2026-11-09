@@ -10,19 +10,19 @@
       "name": "frontend",
       "source": "./plugins/frontend",
       "description": "Frontend conventions: clickable elements look and act clickable (real links/buttons, pointer cursor, focus states), any stack.",
-      "version": "1.0.0"
+      "version": "1.1.0"
     },
     {
       "name": "infra",
       "source": "./plugins/infra",
       "description": "Infrastructure conventions: Railway IaC in .railway/ (one TypeScript file per service, own package.json with plan/apply/deploy scripts), railway up deploys (no GitHub link), Dockerfile-built services and databases, role-based names like database / database-data.",
-      "version": "1.1.0"
+      "version": "1.2.0"
     },
     {
       "name": "git",
       "source": "./plugins/git",
       "description": "Git workflow: solo or team mode saved per project in .claude/git-workflow.json (asked once), commits and pushes straight to main unless a branch is explicitly asked for, and a Stop hook that has Claude ask to commit and push after every change.",
-      "version": "1.0.0"
+      "version": "1.1.0"
     },
     {
       "name": "kit",
