@@ -15,8 +15,8 @@
     {
       "name": "ck-infra",
       "source": "./plugins/ck-infra",
-      "description": "Infrastructure conventions: Railway IaC in .railway/ (one TypeScript file per service, own package.json with plan/apply/deploy scripts), railway up deploys (no GitHub link), Dockerfile-built services and databases, role-based names like database / database-data, us-east4-eqdc4a region (closest to Brazil).",
-      "version": "2.1.0"
+      "description": "Infrastructure conventions: Railway IaC in .railway/ (one TypeScript file per service, own package.json with plan/apply/deploy scripts), Railway project named exactly like the git repo, railway up deploys (no GitHub link), Dockerfile-built services and databases, role-based names like database / database-data, us-east4-eqdc4a region (closest to Brazil).",
+      "version": "2.2.0"
     },
     {
       "name": "ck-git",

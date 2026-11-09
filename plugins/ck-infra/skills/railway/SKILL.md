@@ -14,11 +14,12 @@ Apply these rules to every Railway task, even if the user did not mention them. 
 | Describe infrastructure with Railway IaC in `.railway/` (one file per service, section 3) and apply with `pnpm apply` | `railway.json` / `railway.toml`, or creating/configuring services by hand in the dashboard |
 | Deploy code with `railway up` from the CLI | Link a GitHub repo: no `github()` source, no `source: { repo }`, no `railway service source connect`, no "Deploy from GitHub repo" in the dashboard |
 | Build every service, databases included, from a `Dockerfile` in the repo (`builder: "DOCKERFILE"`) | Railway templates or managed database helpers: `railway deploy` (templates), `railway add --database`, `template()`, `postgres()`, `mysql()`, `redis()`, `mongo()`, `database()`; Nixpacks / Railpack / auto-detected builds |
+| Name the Railway project exactly like the git repo: repo `contention` → project `contention` | A random generated name (`fluffy-cat`, `resourceful-joy`), or a name that differs from the repo |
 | Name services and volumes by role: `database`, `database-data` | Names with the product, project, vendor or technology: `myapp-api`, `postgres`, `Postgres-xyz1`, `redis`, `pg-volume` |
 | Give every service and volume the smallest CPU, memory and size Railway allows (`SMALLEST_LIMITS`, `SMALLEST_VOLUME`, section 5); go higher only when required (section 5a) | Leaving limits unset (the plan maximum), or sizing up "just in case" |
 | Put every service, volume and bucket in `us-east4-eqdc4a` (US East, Virginia), the region closest to Brazil (`IN_REGION`, `REGION`, `BUCKET_REGION`, section 5b) | Leaving the region unset (Railway's default), or any other region unless the user asks for it |
 
-Why: one reviewed file is the source of truth (plan before apply, no drift); deploys happen only when we say so; the Dockerfile pins the exact image and version, and it runs the same locally; generic names survive switching Postgres versions or engines and keep variable references (`${{database.…}}`) stable across projects; small limits cap the bill and a runaway process, and volumes can be grown later but not shrunk; our users are in Brazil, and US East has the lowest latency to them, with every service next to its data on the private network.
+Why: one reviewed file is the source of truth (plan before apply, no drift); the project is named like the repo, so it is easy to find in the dashboard and CLI; deploys happen only when we say so; the Dockerfile pins the exact image and version, and it runs the same locally; generic names survive switching Postgres versions or engines and keep variable references (`${{database.…}}`) stable across projects; small limits cap the bill and a runaway process, and volumes can be grown later but not shrunk; our users are in Brazil, and US East has the lowest latency to them, with every service next to its data on the private network.
 
 ## 2. Names
 
@@ -35,7 +36,9 @@ Name by what the service does for the app, lowercase kebab-case. A volume is `<s
 | Scheduled job | `cron` | |
 | Object storage bucket | `storage` | |
 
-When there are two of a role, add the role-level difference, not the tech: `database-analytics`, `worker-email`. The project name is the app's name (only the project, never repeated in service names). Environments are `production` and `staging`.
+When there are two of a role, add the role-level difference, not the tech: `database-analytics`, `worker-email`. Environments are `production` and `staging`.
+
+The project is named exactly like the git repo, character for character: repo `contention` → project `contention`. Take the name from the `origin` remote (`basename -s .git "$(git remote get-url origin)"`), or the repo folder (`basename "$(git rev-parse --show-toplevel)"`) if there's no remote. Never accept the random name Railway generates when no name is given. The repo name appears only in the project (and `<repo>-infra` in `.railway/package.json`), never in service names.
 
 ## 3. Layout
 
@@ -60,7 +63,7 @@ Pin exact versions (no `^`). Check the current ones with `npm view railway versi
 ## 4. Setup flow
 
 1. `railway whoami`. If not logged in, ask the user to run `! railway login`.
-2. Link or create the project: `railway link` (existing) or `railway init --name <app>` (new). Never pick "deploy from GitHub".
+2. Link or create the project: `railway link` (existing) or `railway init --name <repo>` (new; always pass `--name`, or Railway generates a random one). Never pick "deploy from GitHub". Then check `railway status --json`: if the project name isn't the repo name (section 2), rename it. `project("<repo>")` in `railway.ts` sets the name; if `pnpm plan` doesn't show the rename, ask the user to rename it in the dashboard (project Settings → General), since the CLI has no rename command.
 3. If `railway.json` / `railway.toml` exists: `railway config migrate` (dry run), review, then `railway config migrate --apply --delete-files`. If the project already has services: `railway config pull`. Then split the generated file into the layout above and rename and convert services to these rules.
 4. Otherwise write the files in section 5 and the Dockerfiles in section 6. (`railway config init` only creates a single-file starter; replace it.)
 5. In `.railway/`: install, `pnpm typecheck`, `pnpm plan`, show the user the plan, then `pnpm apply`. Destructive changes (deletes, renames, which recreate the resource and lose volume data) need explicit user approval before `--confirm-destructive`.
@@ -68,13 +71,13 @@ Pin exact versions (no `^`). Check the current ones with `npm view railway versi
 
 ## 5. `.railway/` files
 
-Replace `<app>` with the app's name. Add a `deploy:<service>` script for every service; its path is the folder holding that service's Dockerfile.
+Replace `<repo>` with the git repo's name (section 2). Add a `deploy:<service>` script for every service; its path is the folder holding that service's Dockerfile.
 
 `.railway/package.json`:
 
 ```json
 {
-  "name": "<app>-infra",
+  "name": "<repo>-infra",
   "private": true,
   "type": "module",
   "scripts": {
@@ -205,7 +208,7 @@ import { api } from "./services/api";
 import { database } from "./services/database";
 
 /**
- * <App>'s Railway infrastructure. Each service lives in its own file under ./services.
+ * <repo>'s Railway infrastructure. Each service lives in its own file under ./services.
  *
  *   railway link                      # once, pick the project/environment
  *   pnpm plan                         # preview
@@ -220,7 +223,7 @@ export default defineRailway(() => {
   const { db, data } = database();
   const backend = api(db);
 
-  return project("<app>", {
+  return project("<repo>", { // exactly the git repo's name
     environments: ["production"],
     resources: [group("Backend", [backend, db, data])],
   });
@@ -291,6 +294,8 @@ grep -rLE "SMALLEST_LIMITS|limits\(" .railway/services                          
 grep -rn 'volume("[^"]*")' .railway/services                                       # should be empty: every volume has a size
 grep -rL "IN_REGION\|regions:" .railway/services                                    # should be empty: every service has a region
 grep -n 'REGION = ' .railway/shared.ts                                              # us-east4-eqdc4a, unless the user chose another
+grep -n 'project("' .railway/railway.ts                                             # the repo's name
+railway status --json | grep -m1 '"name"'                                           # linked project is named like the repo
 (cd .railway && pnpm typecheck)
 (cd .railway && pnpm plan --detailed-exit-code)                                    # exit 0: no drift
 ```
