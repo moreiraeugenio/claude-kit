@@ -39,6 +39,42 @@ claude plugin install frontend@claude-kit --scope project
 
 The CLI rewrites `.claude/settings.json` without `autoUpdate`, so prefer copying the template, or add `"autoUpdate": true` back afterwards. It matters because third-party marketplaces don't auto-update by default. With it on, updates download in the background and apply on the next launch or after `/reload-plugins`. To update by hand, run `claude plugin update frontend@claude-kit`.
 
+## Set up a project with prompts
+
+Two prompts to paste into Claude Code in the target project. They don't name specific plugins, so they keep working as plugins, skills and agents are added here. Restart Claude Code between them, because plugins only load when a session starts.
+
+**1. Install.** Picks the plugins that fit the project and enables them:
+
+```
+Set up the claude-kit plugin marketplace (github: moreiraeugenio/claude-kit) for this project.
+
+1. Read https://github.com/moreiraeugenio/claude-kit/blob/main/.claude-plugin/marketplace.json and the Plugins table in the README to see what every plugin does.
+2. Look at this project's stack and tooling, and decide which plugins apply. Tell me which ones you picked and why, and which ones you skipped and why.
+3. Edit `.claude/settings.json` in the project root. Create the file and the `.claude/` folder if they don't exist. If the file already exists, merge these keys in and keep every other setting. If `enabledPlugins` or `extraKnownMarketplaces` already exist, add to them instead of replacing them:
+   - `extraKnownMarketplaces.claude-kit` = { "source": { "source": "github", "repo": "moreiraeugenio/claude-kit" }, "autoUpdate": true }
+   - `enabledPlugins` = "<plugin>@claude-kit": true for each plugin you picked
+4. Check that the result is valid JSON, then show me the final file. Don't commit.
+```
+
+Then restart Claude Code and run `/plugin` to install the enabled plugins.
+
+**2. Review and adjust.** Brings the codebase in line with every enabled plugin:
+
+```
+Bring this project in line with every claude-kit plugin enabled in `.claude/settings.json`.
+
+1. For each enabled `<plugin>@claude-kit`, list all of its skills, agents, commands and hooks, and read each one in full (SKILL.md, agent and command files). If any are missing from your session, read them from https://github.com/moreiraeugenio/claude-kit/tree/main/plugins/<plugin> instead.
+2. Review the whole project against the rules in each one. If one doesn't apply to this project, skip it and say why. Where a plugin provides an agent built for review or auditing, use that agent for its area.
+3. Before changing anything, show me a findings list grouped by plugin and skill/agent. For each finding give the file:line, the rule it breaks, and the fix you propose.
+4. Then apply the fixes. Keep changes minimal and match the existing code style. Ask me before any destructive or infra-affecting change, such as deleting files, changing deploy targets or renaming env vars.
+5. Run the project's existing lint, typecheck and tests, and report the results.
+6. Finish with a summary of what changed per plugin, and anything you left alone on purpose.
+
+Don't commit.
+```
+
+Run prompt 2 again whenever a plugin gains new skills or agents.
+
 ## Use it in a project
 
 Skills load on their own when the task matches, but they only fix code Claude is already editing and mention violations elsewhere. To apply a skill to a whole existing codebase, ask for it directly. Plugin skills are slash commands named `/<plugin>:<skill>`:
