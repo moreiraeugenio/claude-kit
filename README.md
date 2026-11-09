@@ -43,17 +43,18 @@ The CLI rewrites `.claude/settings.json` without `autoUpdate`, so prefer copying
 
 Two prompts to paste into Claude Code in the target project. They don't name specific plugins, so they keep working as plugins, skills and agents are added here. Restart Claude Code between them, because plugins only load when a session starts.
 
-**1. Install.** Picks the plugins that fit the project and enables them:
+**1. Install.** Lets you pick plugins from select boxes (fitting ones pre-marked as recommended), then enables them:
 
 ```
 Set up the claude-kit plugin marketplace (github: moreiraeugenio/claude-kit) for this project.
 
 1. Read https://github.com/moreiraeugenio/claude-kit/blob/main/.claude-plugin/marketplace.json and the Plugins table in the README to see what every plugin does.
-2. Look at this project's stack and tooling, and decide which plugins apply. Tell me which ones you picked and why, and which ones you skipped and why.
-3. Edit `.claude/settings.json` in the project root. Create the file and the `.claude/` folder if they don't exist. If the file already exists, merge these keys in and keep every other setting. If `enabledPlugins` or `extraKnownMarketplaces` already exist, add to them instead of replacing them:
+2. Look at this project's stack and tooling to work out which plugins fit.
+3. Let me choose with the AskUserQuestion tool, as a multi-select question. Each plugin is one option: the label is the plugin name, and the description is one short line on what it does. Add "(Recommended)" to the label of the plugins that fit this project and put them first. The tool allows at most 4 options per question, so if there are more plugins, split them across several questions (up to 4 per call) grouped by area.
+4. Edit `.claude/settings.json` in the project root. Create the file and the `.claude/` folder if they don't exist. If the file already exists, merge these keys in and keep every other setting. If `enabledPlugins` or `extraKnownMarketplaces` already exist, add to them instead of replacing them:
    - `extraKnownMarketplaces.claude-kit` = { "source": { "source": "github", "repo": "moreiraeugenio/claude-kit" }, "autoUpdate": true }
-   - `enabledPlugins` = "<plugin>@claude-kit": true for each plugin you picked
-4. Check that the result is valid JSON, then show me the final file. Don't commit.
+   - `enabledPlugins` = "<plugin>@claude-kit": true for each plugin I selected
+5. Check that the result is valid JSON, then show me the final file. Don't commit.
 ```
 
 Then restart Claude Code and run `/plugin` to install the enabled plugins.
