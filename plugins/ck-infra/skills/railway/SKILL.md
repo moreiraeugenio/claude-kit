@@ -16,8 +16,9 @@ Apply these rules to every Railway task, even if the user did not mention them. 
 | Build every service, databases included, from a `Dockerfile` in the repo (`builder: "DOCKERFILE"`) | Railway templates or managed database helpers: `railway deploy` (templates), `railway add --database`, `template()`, `postgres()`, `mysql()`, `redis()`, `mongo()`, `database()`; Nixpacks / Railpack / auto-detected builds |
 | Name services and volumes by role: `database`, `database-data` | Names with the product, project, vendor or technology: `myapp-api`, `postgres`, `Postgres-xyz1`, `redis`, `pg-volume` |
 | Give every service and volume the smallest CPU, memory and size Railway allows (`SMALLEST_LIMITS`, `SMALLEST_VOLUME`, section 5); go higher only when required (section 5a) | Leaving limits unset (the plan maximum), or sizing up "just in case" |
+| Put every service, volume and bucket in `us-east4-eqdc4a` (US East, Virginia), the region closest to Brazil (`IN_REGION`, `REGION`, `BUCKET_REGION`, section 5b) | Leaving the region unset (Railway's default), or any other region unless the user asks for it |
 
-Why: one reviewed file is the source of truth (plan before apply, no drift); deploys happen only when we say so; the Dockerfile pins the exact image and version, and it runs the same locally; generic names survive switching Postgres versions or engines and keep variable references (`${{database.…}}`) stable across projects; small limits cap the bill and a runaway process, and volumes can be grown later but not shrunk.
+Why: one reviewed file is the source of truth (plan before apply, no drift); deploys happen only when we say so; the Dockerfile pins the exact image and version, and it runs the same locally; generic names survive switching Postgres versions or engines and keep variable references (`${{database.…}}`) stable across projects; small limits cap the bill and a runaway process, and volumes can be grown later but not shrunk; our users are in Brazil, and US East has the lowest latency to them, with every service next to its data on the private network.
 
 ## 2. Names
 
@@ -127,8 +128,17 @@ export const limits = (cpu: number, memoryMB: number) =>
   ({ limitOverride: { containers: { cpu, memoryBytes: memoryMB * 1_000_000 } } }) as const;
 export const SMALLEST_LIMITS = limits(0.5, 500);
 
-/** Smallest volume size. Volumes can grow later (online), never shrink. */
-export const SMALLEST_VOLUME = { sizeMB: 500, allowOnlineResize: true } as const;
+/**
+ * Region for every service and volume: US East (Virginia), the closest to Brazil.
+ * Spread `IN_REGION` into every service(); volumes get it through SMALLEST_VOLUME.
+ */
+export const REGION = "us-east4-eqdc4a";
+export const IN_REGION = { regions: { [REGION]: 1 } } as const;
+/** Buckets use their own region codes: "iad" is the same Virginia location. Immutable after creation. */
+export const BUCKET_REGION = "iad" as const;
+
+/** Smallest volume size, in REGION. Volumes can grow later (online), never shrink. */
+export const SMALLEST_VOLUME = { sizeMB: 500, allowOnlineResize: true, region: REGION } as const;
 
 /** Public hostnames. */
 export const WEB_ORIGIN = "https://example.com";
@@ -139,7 +149,7 @@ export const API_DOMAIN = "api.example.com";
 
 ```ts
 import { empty, service, volume } from "railway/iac";
-import { SMALLEST_LIMITS, SMALLEST_VOLUME, dockerfile } from "../shared";
+import { IN_REGION, SMALLEST_LIMITS, SMALLEST_VOLUME, dockerfile } from "../shared";
 
 /** Postgres built from infra/database/Dockerfile, data on the database-data volume. */
 export function database() {
@@ -148,6 +158,7 @@ export function database() {
     source: empty(),
     build: dockerfile,
     deploy: SMALLEST_LIMITS,
+    ...IN_REGION,
     volumeMounts: { "/var/lib/postgresql/data": data },
     env: {
       POSTGRES_USER: "app",
@@ -164,7 +175,7 @@ export function database() {
 
 ```ts
 import { empty, service, type ResourceNode } from "railway/iac";
-import { API_DOMAIN, SMALLEST_LIMITS, WEB_ORIGIN, dockerfile } from "../shared";
+import { API_DOMAIN, IN_REGION, SMALLEST_LIMITS, WEB_ORIGIN, dockerfile } from "../shared";
 
 /** HTTP API built from api/Dockerfile. Takes the services it depends on. */
 export function api(db: ResourceNode) {
@@ -175,6 +186,7 @@ export function api(db: ResourceNode) {
     source: empty(),
     build: dockerfile,
     deploy: SMALLEST_LIMITS,
+    ...IN_REGION,
     healthcheck: "/health",
     domains: [API_DOMAIN],
     env: {
@@ -236,6 +248,14 @@ Raise in small steps (`limits(1, 1000)`, `sizeMB: 2000`), not to the plan maximu
 
 The `SMALLEST_*` values in `shared.ts` are the smallest values Railway is known to accept (Railway does not document a floor). If `pnpm plan` or `pnpm apply` rejects them, change only the constant, to the smallest value it accepts. Never shrink an existing volume below its current size: Railway can only grow volumes.
 
+### 5b. Region
+
+Every `service()` spreads `...IN_REGION` (one replica in `us-east4-eqdc4a`), every `volume()` gets `region: REGION` (already in `SMALLEST_VOLUME`) and every `bucket()` gets `region: BUCKET_REGION`. A volume must be in the same region as the service it's mounted on. For more replicas, keep the region and raise the count: `regions: { [REGION]: 2 }`, with a comment saying why.
+
+Use another region only when the user asks for it (for example users outside Brazil), and change `REGION` in `shared.ts`, not per service.
+
+Moving an existing project: a service's region change redeploys it in the new region. A volume's region change migrates its data, which means downtime for the service using it, and a bucket's region can't change at all. Show the user the `pnpm plan` output and get explicit approval before applying a volume or bucket region change.
+
 ## 6. Dockerfiles
 
 Pin the major version, never `latest`. Infrastructure Dockerfiles stay minimal; config lives in env vars.
@@ -269,6 +289,8 @@ grep -rnE "github\(|repo:|template\(|postgres\(|mysql\(|redis\(|mongo\(|[^a-z]da
 grep -rn 'service("\|volume("' .railway/services                                   # names follow section 2, file name = service name
 grep -rLE "SMALLEST_LIMITS|limits\(" .railway/services                              # should be empty: every service has limits
 grep -rn 'volume("[^"]*")' .railway/services                                       # should be empty: every volume has a size
+grep -rL "IN_REGION\|regions:" .railway/services                                    # should be empty: every service has a region
+grep -n 'REGION = ' .railway/shared.ts                                              # us-east4-eqdc4a, unless the user chose another
 (cd .railway && pnpm typecheck)
 (cd .railway && pnpm plan --detailed-exit-code)                                    # exit 0: no drift
 ```
