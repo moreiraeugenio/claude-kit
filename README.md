@@ -67,7 +67,7 @@ Use these where `kit` isn't installed: they do what `/kit:setup` and `/kit:sync`
 ```
 Set up the claude-kit plugin marketplace (github: moreiraeugenio/claude-kit) for this project.
 
-1. Read https://github.com/moreiraeugenio/claude-kit/blob/main/.claude-plugin/marketplace.json and the Plugins table in the README to see what every plugin does.
+1. Read https://github.com/moreiraeugenio/claude-kit/blob/main/.claude-plugin/marketplace.json and the Plugins table in the README to see what every plugin does. Leave out `kit`: it's installed per user, not per project.
 2. Look at this project's stack and tooling to work out which plugins fit. Workflow plugins (for example git or commit conventions) fit any project, not only a particular stack.
 3. Let me choose with the AskUserQuestion tool, as a multi-select question. Each plugin is one option: the label is the plugin name, and the description is one short line on what it does. Add "(Recommended)" to the label of the plugins that fit this project and put them first. The tool allows at most 4 options per question, so if there are more plugins, split them across several questions (up to 4 per call) grouped by area.
 4. Edit `.claude/settings.json` in the project root. Create the file and the `.claude/` folder if they don't exist. If the file already exists, merge these keys in and keep every other setting. If `enabledPlugins` or `extraKnownMarketplaces` already exist, add to them instead of replacing them:
@@ -78,7 +78,7 @@ Set up the claude-kit plugin marketplace (github: moreiraeugenio/claude-kit) for
 
 Then restart Claude Code and run `/plugin` to install the enabled plugins.
 
-**2. Review and adjust.** With the `kit` plugin enabled, run `/kit:sync`. It does the same as this prompt, but asks which plugins to sync against (enabled or not) and uses each one's latest version. Without `kit`, this prompt brings the codebase in line with every enabled plugin:
+**2. Review and adjust.** With `kit` installed, run `/kit:sync` instead. It does the same as this prompt, but asks which plugins to sync against (enabled or not) and uses each one's latest version. Without `kit`, this prompt brings the codebase in line with every enabled plugin:
 
 ```
 Bring this project in line with every claude-kit plugin enabled in `.claude/settings.json`.
@@ -118,7 +118,7 @@ Use the clickable-elements skill to audit every page and component in this repo.
 2. Put components at the plugin root: `skills/<skill>/SKILL.md`, `agents/*.md`, `commands/*.md`, `hooks/hooks.json`, `.mcp.json`.
 3. Register it in `.claude-plugin/marketplace.json` with `"source": "./plugins/<name>"`.
 4. Run `claude plugin validate .` and `claude plugin validate plugins/<name>`.
-5. Add a row to the table above.
+5. Add a row to the table above, and enable it in this repo's `.claude/settings.json` (this repo uses every project plugin).
 
 Plugin names can't start with `claude-` or `anthropic-`.
 
