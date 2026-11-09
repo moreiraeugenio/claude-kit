@@ -15,8 +15,9 @@ Apply these rules to every Railway task, even if the user did not mention them. 
 | Deploy code with `railway up` from the CLI | Link a GitHub repo: no `github()` source, no `source: { repo }`, no `railway service source connect`, no "Deploy from GitHub repo" in the dashboard |
 | Build every service, databases included, from a `Dockerfile` in the repo (`builder: "DOCKERFILE"`) | Railway templates or managed database helpers: `railway deploy` (templates), `railway add --database`, `template()`, `postgres()`, `mysql()`, `redis()`, `mongo()`, `database()`; Nixpacks / Railpack / auto-detected builds |
 | Name services and volumes by role: `database`, `database-data` | Names with the product, project, vendor or technology: `myapp-api`, `postgres`, `Postgres-xyz1`, `redis`, `pg-volume` |
+| Give every service and volume the smallest CPU, memory and size Railway allows (`SMALLEST_LIMITS`, `SMALLEST_VOLUME`, section 5); go higher only when required (section 5a) | Leaving limits unset (the plan maximum), or sizing up "just in case" |
 
-Why: one reviewed file is the source of truth (plan before apply, no drift); deploys happen only when we say so; the Dockerfile pins the exact image and version, and it runs the same locally; generic names survive switching Postgres versions or engines and keep variable references (`${{database.…}}`) stable across projects.
+Why: one reviewed file is the source of truth (plan before apply, no drift); deploys happen only when we say so; the Dockerfile pins the exact image and version, and it runs the same locally; generic names survive switching Postgres versions or engines and keep variable references (`${{database.…}}`) stable across projects; small limits cap the bill and a runaway process, and volumes can be grown later but not shrunk.
 
 ## 2. Names
 
@@ -118,6 +119,17 @@ Replace `<app>` with the app's name. Add a `deploy:<service>` script for every s
  */
 export const dockerfile = { builder: "DOCKERFILE", dockerfilePath: "Dockerfile" } as const;
 
+/**
+ * Smallest per-replica limits Railway accepts. Every service starts here.
+ * Pass `limits(cpu, memoryMB)` instead only with a comment saying why the minimum is not enough.
+ */
+export const limits = (cpu: number, memoryMB: number) =>
+  ({ limitOverride: { containers: { cpu, memoryBytes: memoryMB * 1_000_000 } } }) as const;
+export const SMALLEST_LIMITS = limits(0.5, 500);
+
+/** Smallest volume size. Volumes can grow later (online), never shrink. */
+export const SMALLEST_VOLUME = { sizeMB: 500, allowOnlineResize: true } as const;
+
 /** Public hostnames. */
 export const WEB_ORIGIN = "https://example.com";
 export const API_DOMAIN = "api.example.com";
@@ -127,14 +139,15 @@ export const API_DOMAIN = "api.example.com";
 
 ```ts
 import { empty, service, volume } from "railway/iac";
-import { dockerfile } from "../shared";
+import { SMALLEST_LIMITS, SMALLEST_VOLUME, dockerfile } from "../shared";
 
 /** Postgres built from infra/database/Dockerfile, data on the database-data volume. */
 export function database() {
-  const data = volume("database-data");
+  const data = volume("database-data", SMALLEST_VOLUME);
   const db = service("database", {
     source: empty(),
     build: dockerfile,
+    deploy: SMALLEST_LIMITS,
     volumeMounts: { "/var/lib/postgresql/data": data },
     env: {
       POSTGRES_USER: "app",
@@ -151,7 +164,7 @@ export function database() {
 
 ```ts
 import { empty, service, type ResourceNode } from "railway/iac";
-import { API_DOMAIN, WEB_ORIGIN, dockerfile } from "../shared";
+import { API_DOMAIN, SMALLEST_LIMITS, WEB_ORIGIN, dockerfile } from "../shared";
 
 /** HTTP API built from api/Dockerfile. Takes the services it depends on. */
 export function api(db: ResourceNode) {
@@ -161,6 +174,7 @@ export function api(db: ResourceNode) {
   return service("api", {
     source: empty(),
     build: dockerfile,
+    deploy: SMALLEST_LIMITS,
     healthcheck: "/health",
     domains: [API_DOMAIN],
     env: {
@@ -209,6 +223,19 @@ export default defineRailway(() => {
 - Wire services with Railway references (`${{database.VAR}}`, or `db.env.VAR` for a whole value) over the private network (`RAILWAY_PRIVATE_DOMAIN`). No public TCP proxy on a database unless the user asks.
 - Group resources on the canvas with `group()` (e.g. `Backend`, `Workers`). Every service and volume must be in `resources`: omitting one deletes it on the next apply.
 
+### 5a. Sizing
+
+Every `service()` gets `deploy: SMALLEST_LIMITS` and every `volume()` gets `SMALLEST_VOLUME`. Unset limits default to the plan maximum, so always set them.
+
+Go above the minimum only when there is a concrete reason, and write that reason in a comment next to the value:
+- the image documents a higher floor, such as a search engine or JVM that needs at least 1-2 GB of heap;
+- the service was OOM-killed or CPU-throttled at the current limit (check `railway logs` and the service metrics);
+- the data, or its known growth, does not fit in the volume.
+
+Raise in small steps (`limits(1, 1000)`, `sizeMB: 2000`), not to the plan maximum. When raising, set `deploy: limits(...)` in the service's own file, or set `{ ...SMALLEST_VOLUME, sizeMB: 2000 }` for a volume.
+
+The `SMALLEST_*` values in `shared.ts` are the smallest values Railway is known to accept (Railway does not document a floor). If `pnpm plan` or `pnpm apply` rejects them, change only the constant, to the smallest value it accepts. Never shrink an existing volume below its current size: Railway can only grow volumes.
+
 ## 6. Dockerfiles
 
 Pin the major version, never `latest`. Infrastructure Dockerfiles stay minimal; config lives in env vars.
@@ -240,6 +267,8 @@ For CI, use a `RAILWAY_TOKEN` project token and run the same scripts (`pnpm appl
 find . -name "railway.json" -o -name "railway.toml" | grep -v node_modules       # should be empty
 grep -rnE "github\(|repo:|template\(|postgres\(|mysql\(|redis\(|mongo\(|[^a-z]database\(\"|NIXPACKS|RAILPACK" .railway --include=*.ts --exclude-dir=node_modules
 grep -rn 'service("\|volume("' .railway/services                                   # names follow section 2, file name = service name
+grep -rLE "SMALLEST_LIMITS|limits\(" .railway/services                              # should be empty: every service has limits
+grep -rn 'volume("[^"]*")' .railway/services                                       # should be empty: every volume has a size
 (cd .railway && pnpm typecheck)
 (cd .railway && pnpm plan --detailed-exit-code)                                    # exit 0: no drift
 ```
