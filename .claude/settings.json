@@ -1,8 +1,6 @@
 {
   "enabledPlugins": {
-    "git@claude-kit": true,
-    "frontend@claude-kit": true,
-    "infra@claude-kit": true
+    "git@claude-kit": true
   },
   "extraKnownMarketplaces": {
     "claude-kit": {
