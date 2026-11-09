@@ -1,0 +1,7 @@
+{
+  "name": "kit",
+  "description": "claude-kit tooling: /kit:sync reviews a project against the claude-kit plugins you pick, enabled or not, and brings it in line.",
+  "version": "1.0.0",
+  "author": { "name": "Eugenio Moreira", "email": "me@eugeniomoreira.com" },
+  "repository": "https://github.com/moreiraeugenio/claude-kit"
+}

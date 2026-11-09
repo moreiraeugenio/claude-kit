@@ -9,6 +9,7 @@ My reusable Claude Code skills, agents and commands, packaged as a [plugin marke
 | `frontend` | Clickable elements look and act clickable: real links and buttons, pointer cursor, hover and focus states, in any stack. |
 | `infra` | Railway: IaC in `.railway/` with one TypeScript file per service and its own `package.json` (`plan`, `apply`, `deploy:<service>` scripts), no `railway.json`, deploys via `railway up` (never a linked GitHub repo), every service and database built from a Dockerfile (no templates), role-based names like `database` / `database-data`. |
 | `git` | Commits and pushes: asks once per project whether it's solo or team (saved in a committed `.claude/git-workflow.json`). Solo commits and pushes straight to main, never branching unless asked; team uses the workflow picked at setup. Claude asks to commit and push after every change (Stop hook). `/git:commit` commits and pushes everything on demand, including changes you made by hand. |
+| `kit` | `/kit:sync`: asks which claude-kit plugins to sync against, enabled or not, and shows each one's status (installed version vs latest). Then it reviews the project against their latest rules, shows the findings, fixes them, and offers to enable the plugins you picked that aren't enabled yet. Pass names to skip the question: `/kit:sync infra git`. |
 
 ## Enable it in a project
 
@@ -60,7 +61,7 @@ Set up the claude-kit plugin marketplace (github: moreiraeugenio/claude-kit) for
 
 Then restart Claude Code and run `/plugin` to install the enabled plugins.
 
-**2. Review and adjust.** Brings the codebase in line with every enabled plugin:
+**2. Review and adjust.** With the `kit` plugin enabled, run `/kit:sync`. It does the same as this prompt, but asks which plugins to sync against (enabled or not) and uses each one's latest version. Without `kit`, this prompt brings the codebase in line with every enabled plugin:
 
 ```
 Bring this project in line with every claude-kit plugin enabled in `.claude/settings.json`.
@@ -74,7 +75,7 @@ Bring this project in line with every claude-kit plugin enabled in `.claude/sett
 7. Don't commit during the review. At the end, commit and push the way the enabled plugins say (for example the git plugin's workflow). If no plugin covers it, ask me first.
 ```
 
-Run prompt 2 again whenever a plugin gains new skills or agents.
+Run `/kit:sync` (or prompt 2) again whenever a plugin changes.
 
 ## Use it in a project
 
