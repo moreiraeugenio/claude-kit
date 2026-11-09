@@ -7,6 +7,7 @@ My reusable Claude Code skills, agents and commands, packaged as a [plugin marke
 | Plugin | What it does |
 |---|---|
 | `frontend` | Clickable elements look and act clickable: real links and buttons, pointer cursor, hover and focus states, in any stack. |
+| `infra` | Railway: IaC in `.railway/` with one TypeScript file per service and its own `package.json` (`plan`, `apply`, `deploy:<service>` scripts), no `railway.json`, deploys via `railway up` (never a linked GitHub repo), every service and database built from a Dockerfile (no templates), role-based names like `database` / `database-data`. |
 
 ## Enable it in a project
 
@@ -21,7 +22,8 @@ Copy [`templates/project-settings.json`](templates/project-settings.json) to `.c
     }
   },
   "enabledPlugins": {
-    "frontend@claude-kit": true
+    "frontend@claude-kit": true,
+    "infra@claude-kit": true
   }
 }
 ```
