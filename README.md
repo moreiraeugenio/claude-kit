@@ -37,6 +37,24 @@ claude plugin install frontend@claude-kit --scope project
 
 The CLI rewrites `.claude/settings.json` without `autoUpdate`, so prefer copying the template, or add `"autoUpdate": true` back afterwards. It matters because third-party marketplaces don't auto-update by default. With it on, updates download in the background and apply on the next launch or after `/reload-plugins`. To update by hand, run `claude plugin update frontend@claude-kit`.
 
+## Use it in a project
+
+Skills load on their own when the task matches, but they only fix code Claude is already editing and mention violations elsewhere. To apply a skill to a whole existing codebase, ask for it directly. Plugin skills are slash commands named `/<plugin>:<skill>`:
+
+```
+/frontend:clickable-elements Review the whole codebase against these rules and fix every violation.
+```
+
+Or in plain words:
+
+```
+Use the clickable-elements skill to audit every page and component in this repo. Fix all violations, then summarise what changed per file.
+```
+
+- **Large repos:** ask for a list first ("List all violations grouped by file, don't change anything yet"), check it, then say "fix them".
+- **Check it's installed:** `/plugin` should show `frontend@claude-kit` as installed, and typing `/frontend:` should autocomplete. If not, do the install step above on that machine.
+- **Review without edits:** run `/code-review` and add "check against the clickable-elements skill" to review the current diff against these rules.
+
 ## Add a plugin
 
 1. Create `plugins/<name>/` with `.claude-plugin/plugin.json` (`name`, `description`, `version`).
