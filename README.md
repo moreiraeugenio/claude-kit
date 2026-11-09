@@ -1,6 +1,6 @@
 # claude-kit
 
-My reusable Claude Code skills, agents and commands, packaged as a [plugin marketplace](https://code.claude.com/docs/en/plugins/marketplace-reference). Each project opts in through its own committed `.claude/settings.json`, so nothing is installed globally and it works on any machine or account that clones the project.
+My reusable Claude Code skills, agents and commands, packaged as a [plugin marketplace](https://code.claude.com/docs/en/plugins/marketplace-reference). Each project opts in through its own committed `.claude/settings.json`, so nothing but the small `kit` tooling plugin is installed globally, and it works on any machine or account that clones the project.
 
 ## Plugins
 
@@ -9,7 +9,24 @@ My reusable Claude Code skills, agents and commands, packaged as a [plugin marke
 | `frontend` | Clickable elements look and act clickable: real links and buttons, pointer cursor, hover and focus states, in any stack. |
 | `infra` | Railway: IaC in `.railway/` with one TypeScript file per service and its own `package.json` (`plan`, `apply`, `deploy:<service>` scripts), no `railway.json`, deploys via `railway up` (never a linked GitHub repo), every service and database built from a Dockerfile (no templates), role-based names like `database` / `database-data`. |
 | `git` | Commits and pushes: asks once per project whether it's solo or team (saved in a committed `.claude/git-workflow.json`). Solo commits and pushes straight to main, never branching unless asked; team uses the workflow picked at setup. Claude asks to commit and push after every change (Stop hook). `/git:commit` commits and pushes everything on demand, including changes you made by hand. |
-| `kit` | `/kit:sync`: asks which claude-kit plugins to sync against, enabled or not, and shows each one's status (installed version vs latest). Then it reviews the project against their latest rules, shows the findings, fixes them, and offers to enable the plugins you picked that aren't enabled yet. Pass names to skip the question: `/kit:sync infra git`. |
+| `kit` | Installed once per machine (user scope), not per project. `/kit:setup` asks which plugins to enable in the current project, then writes `.claude/settings.json` and installs them. `/kit:sync` asks which plugins to sync against (enabled or not) and shows each one's status (installed version vs latest). Then it reviews the project against their latest rules, shows the findings and fixes them. Pass names to skip the question: `/kit:setup infra git`, `/kit:sync infra`. |
+
+## Quick start
+
+Once per machine, install the `kit` plugin for your user:
+
+```bash
+claude plugin marketplace add moreiraeugenio/claude-kit
+claude plugin install kit@claude-kit
+```
+
+Then in any project:
+
+1. `/kit:setup`: pick the plugins, and it enables and installs them.
+2. `/reload-plugins`
+3. `/kit:sync`: brings the codebase in line with them. Run it again whenever a plugin changes.
+
+Anyone else who clones the project gets the enabled plugins from its committed `.claude/settings.json`, and doesn't need `kit` (see below). The prompts further down do the same as the two commands without installing `kit`.
 
 ## Enable it in a project
 
@@ -43,7 +60,7 @@ The CLI rewrites `.claude/settings.json` without `autoUpdate`, so prefer copying
 
 ## Set up a project with prompts
 
-Two prompts to paste into Claude Code in the target project. They don't name specific plugins, so they keep working as plugins, skills and agents are added here. Restart Claude Code between them, because plugins only load when a session starts.
+Use these where `kit` isn't installed: they do what `/kit:setup` and `/kit:sync` do. Two prompts to paste into Claude Code in the target project. They don't name specific plugins, so they keep working as plugins, skills and agents are added here. Restart Claude Code between them, because plugins only load when a session starts.
 
 **1. Install.** Lets you pick plugins from select boxes (fitting ones pre-marked as recommended), then enables them:
 

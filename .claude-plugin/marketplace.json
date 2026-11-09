@@ -27,8 +27,8 @@
     {
       "name": "kit",
       "source": "./plugins/kit",
-      "description": "claude-kit tooling: /kit:sync asks which claude-kit plugins to sync against (enabled or not, showing installed vs latest version), reviews the project against their latest rules and fixes it.",
-      "version": "1.0.0"
+      "description": "claude-kit tooling, installed once per user: /kit:setup picks and installs plugins for a project; /kit:sync asks which plugins to sync against (enabled or not, installed vs latest version), reviews the project against their latest rules and fixes it.",
+      "version": "1.1.0"
     }
   ]
 }
