@@ -1,7 +1,7 @@
 {
   "name": "ck-infra",
   "description": "Infrastructure conventions: Railway via IaC, project named like the repo, CLI deploys, Dockerfiles, role-based names and the us-east4-eqdc4a region.",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "author": { "name": "Eugenio Moreira", "email": "me@eugeniomoreira.com" },
   "repository": "https://github.com/moreiraeugenio/claude-kit"
 }

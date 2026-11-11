@@ -17,6 +17,7 @@ Apply these rules to every Railway task, even if the user did not mention them. 
 | Name the Railway project exactly like the git repo: repo `contention` → project `contention` | A random generated name (`fluffy-cat`, `resourceful-joy`), or a name that differs from the repo |
 | Name services and volumes by role: `database`, `database-data` | Names with the product, project, vendor or technology: `myapp-api`, `postgres`, `Postgres-xyz1`, `redis`, `pg-volume` |
 | Give every service and volume the smallest CPU, memory and size Railway allows (`SMALLEST_LIMITS`, `SMALLEST_VOLUME`, section 5); go higher only when required (section 5a) | Leaving limits unset (the plan maximum), or sizing up "just in case" |
+| Size memory and volumes in whole GB, only through `limits(cpu, memoryGB)` and `volumeSize(gb)` (section 5a) | Raw `memoryBytes` / `sizeMB` values, MB amounts (`500`), or fractions of a GB: the dashboard shows GB and displays anything else rounded or oddly |
 | Put every service, volume and bucket in `us-east4-eqdc4a` (US East, Virginia), the region closest to Brazil (`IN_REGION`, `REGION`, `BUCKET_REGION`, section 5b) | Leaving the region unset (Railway's default), or any other region unless the user asks for it |
 
 Why: one reviewed file is the source of truth (plan before apply, no drift); the project is named like the repo, so it is easy to find in the dashboard and CLI; deploys happen only when we say so; the Dockerfile pins the exact image and version, and it runs the same locally; generic names survive switching Postgres versions or engines and keep variable references (`${{database.…}}`) stable across projects; small limits cap the bill and a runaway process, and volumes can be grown later but not shrunk; our users are in Brazil, and US East has the lowest latency to them, with every service next to its data on the private network.
@@ -123,13 +124,19 @@ Replace `<repo>` with the git repo's name (section 2). Add a `deploy:<service>` 
  */
 export const dockerfile = { builder: "DOCKERFILE", dockerfilePath: "Dockerfile" } as const;
 
+/** Sizes are whole GB, the unit the Railway dashboard shows. Anything else fails plan/apply. */
+const wholeGB = (gb: number) => {
+  if (!Number.isInteger(gb) || gb < 1) throw new Error(`Railway sizes must be whole GB, got ${gb}`);
+  return gb;
+};
+
 /**
- * Smallest per-replica limits Railway accepts. Every service starts here.
- * Pass `limits(cpu, memoryMB)` instead only with a comment saying why the minimum is not enough.
+ * Per-replica limits: vCPU and memory in whole GB. Every service starts at SMALLEST_LIMITS.
+ * Pass `limits(cpu, memoryGB)` instead only with a comment saying why the minimum is not enough.
  */
-export const limits = (cpu: number, memoryMB: number) =>
-  ({ limitOverride: { containers: { cpu, memoryBytes: memoryMB * 1_000_000 } } }) as const;
-export const SMALLEST_LIMITS = limits(0.5, 500);
+export const limits = (cpu: number, memoryGB: number) =>
+  ({ limitOverride: { containers: { cpu, memoryBytes: wholeGB(memoryGB) * 1_000_000_000 } } }) as const;
+export const SMALLEST_LIMITS = limits(0.5, 1);
 
 /**
  * Region for every service and volume: US East (Virginia), the closest to Brazil.
@@ -140,8 +147,10 @@ export const IN_REGION = { regions: { [REGION]: 1 } } as const;
 /** Buckets use their own region codes: "iad" is the same Virginia location. Immutable after creation. */
 export const BUCKET_REGION = "iad" as const;
 
-/** Smallest volume size, in REGION. Volumes can grow later (online), never shrink. */
-export const SMALLEST_VOLUME = { sizeMB: 500, allowOnlineResize: true, region: REGION } as const;
+/** Volume of `gb` whole GB, in REGION. Volumes can grow later (online), never shrink. */
+export const volumeSize = (gb: number) =>
+  ({ sizeMB: wholeGB(gb) * 1000, allowOnlineResize: true, region: REGION }) as const;
+export const SMALLEST_VOLUME = volumeSize(1);
 
 /** Public hostnames. */
 export const WEB_ORIGIN = "https://example.com";
@@ -247,9 +256,11 @@ Go above the minimum only when there is a concrete reason, and write that reason
 - the service was OOM-killed or CPU-throttled at the current limit (check `railway logs` and the service metrics);
 - the data, or its known growth, does not fit in the volume.
 
-Raise in small steps (`limits(1, 1000)`, `sizeMB: 2000`), not to the plan maximum. When raising, set `deploy: limits(...)` in the service's own file, or set `{ ...SMALLEST_VOLUME, sizeMB: 2000 }` for a volume.
+Raise in small whole-GB steps (`limits(1, 2)`, `volumeSize(2)`), not to the plan maximum. When raising, set `deploy: limits(...)` in the service's own file, or `volume("<name>", volumeSize(2))` for a volume. Memory and volume sizes are always whole GB: never write `memoryBytes` or `sizeMB` directly, and never pass MB amounts or fractions (`limits(1, 0.5)`, `volumeSize(500)`); `wholeGB()` throws on fractions, so `pnpm plan` fails on them.
 
-The `SMALLEST_*` values in `shared.ts` are the smallest values Railway is known to accept (Railway does not document a floor). If `pnpm plan` or `pnpm apply` rejects them, change only the constant, to the smallest value it accepts. Never shrink an existing volume below its current size: Railway can only grow volumes.
+The `SMALLEST_*` values in `shared.ts` are the smallest values Railway is known to accept (Railway does not document a floor). If `pnpm plan` or `pnpm apply` rejects them, change only the constant, to the smallest whole-GB value it accepts. Never shrink an existing volume below its current size: Railway can only grow volumes.
+
+Migrating MB-based sizing (older versions of these rules used `limits(cpu, memoryMB)`, `SMALLEST_LIMITS = limits(0.5, 500)` and `sizeMB: 500`): replace the helpers in `shared.ts` with the ones above, convert every `limits(cpu, <MB>)` to whole GB rounded **up** (`500` → `1`, `1500` → `2`), and every volume's `sizeMB` to `volumeSize(<GB>)` rounded up. Rounding up only grows resources, so no volume shrinks. Show the user the `pnpm plan` output (it resizes services and volumes) and get approval before `pnpm apply`.
 
 ### 5b. Region
 
@@ -292,6 +303,7 @@ grep -rnE "github\(|repo:|template\(|postgres\(|mysql\(|redis\(|mongo\(|[^a-z]da
 grep -rn 'service("\|volume("' .railway/services                                   # names follow section 2, file name = service name
 grep -rLE "SMALLEST_LIMITS|limits\(" .railway/services                              # should be empty: every service has limits
 grep -rn 'volume("[^"]*")' .railway/services                                       # should be empty: every volume has a size
+grep -rnE "memoryBytes|sizeMB|memoryMB" .railway --include=*.ts --exclude-dir=node_modules | grep -v "^.railway/shared.ts:.*wholeGB("  # should be empty: sizes only via limits(cpu, GB) / volumeSize(GB)
 grep -rL "IN_REGION\|regions:" .railway/services                                    # should be empty: every service has a region
 grep -n 'REGION = ' .railway/shared.ts                                              # us-east4-eqdc4a, unless the user chose another
 grep -n 'project("' .railway/railway.ts                                             # the repo's name
